@@ -1,0 +1,15 @@
+# Normalize line endings: keep LF in the repo for all text files.
+* text=auto eol=lf
+
+# Files that MUST be LF (executed inside Linux containers)
+*.sh   text eol=lf
+*.py   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf
+
+# Binary files — never normalize
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.ico  binary
