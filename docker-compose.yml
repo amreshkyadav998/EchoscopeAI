@@ -1,0 +1,127 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# EchoscopeAI — Local development infrastructure
+#
+# Phase 1.2: brings up the four backing services every microservice depends on:
+#   - postgres   (system of record)
+#   - redis      (cache / pub-sub / rate limiting)
+#   - zookeeper  (Kafka coordination)
+#   - kafka      (event bus)
+#
+# Application service containers (api-gateway, auth-service, ...) are added in
+# later phases. Bring this up with:  docker compose up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: echoscope
+
+services:
+  # ── PostgreSQL 15 ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15
+    container_name: echoscope-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-echoscope}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-echoscope}
+      POSTGRES_DB: ${POSTGRES_DB:-echoscope}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - echoscope-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-echoscope} -d ${POSTGRES_DB:-echoscope}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Redis 7 ────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7
+    container_name: echoscope-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - echoscope-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ── Zookeeper (Kafka coordination) ───────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: echoscope-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-log:/var/lib/zookeeper/log
+    networks:
+      - echoscope-net
+    healthcheck:
+      # dependency-free TCP probe via bash; cp images ship bash with /dev/tcp
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/2181'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Kafka 3.6 (Confluent Platform 7.6.1) ─────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: echoscope-kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Two listeners: PLAINTEXT for in-network services (kafka:9092),
+      # PLAINTEXT_HOST for tools on the host machine (localhost:29092).
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # Single broker locally → replication factor must be 1 (prod uses MSK ×3).
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # We create topics explicitly in Phase 5, so disable auto-creation.
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    ports:
+      - "${KAFKA_HOST_PORT:-29092}:29092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - echoscope-net
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+# ── Named volumes (data survives `docker compose down`) ────────────────────────
+volumes:
+  postgres-data:
+  redis-data:
+  zookeeper-data:
+  zookeeper-log:
+  kafka-data:
+
+# ── Custom bridge network (services resolve each other by name) ────────────────
+networks:
+  echoscope-net:
+    driver: bridge
