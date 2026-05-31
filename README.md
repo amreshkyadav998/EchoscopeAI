@@ -41,7 +41,7 @@ gRPC · Docker · Prometheus + Grafana.
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| **1** | **Foundation & Setup** | 🚧 in progress |
+| **1** | **Foundation & Setup** | ✅ done |
 | 2 | API Gateway | ⬜ |
 | 3 | Auth Service | ⬜ |
 | 4 | Database Schema | ⬜ |
