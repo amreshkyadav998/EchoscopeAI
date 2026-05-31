@@ -1,0 +1,3 @@
+# analytics-service dependencies. Service-specific packages are added in this service's phase.
+# Shared utilities (logger, config, exceptions, schemas):
+-e ../common
