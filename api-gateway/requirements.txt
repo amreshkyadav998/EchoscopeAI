@@ -1,3 +1,14 @@
-# api-gateway dependencies. Service-specific packages are added in this service's phase.
+# api-gateway dependencies.
 # Shared utilities (logger, config, exceptions, schemas):
 -e ../common
+
+# Web framework + server
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
+# Downstream proxying (Phase 2.4) + Redis rate limiting (Phase 2.3)
+httpx>=0.27
+redis>=5.0
+
+# JWT validation (Phase 2.2)
+pyjwt>=2.8
