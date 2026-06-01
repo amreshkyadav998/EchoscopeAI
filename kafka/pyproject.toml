@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "echoscope-kafka"
+version = "0.1.0"
+description = "Shared Kafka utilities for EchoscopeAI: topics, producer, consumer base class."
+requires-python = ">=3.11"
+dependencies = [
+    "aiokafka>=0.10",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["echoscope_kafka*"]

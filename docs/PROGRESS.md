@@ -117,9 +117,30 @@ imports models from `echoscope_db`; all migrations live in `db/alembic`.
 
 > To reseed: `cd db && ../.venv/Scripts/python seed.py` (wipes data first).
 
+## ✅ Phase 5 — Kafka Setup (central `kafka/` package = `echoscope_kafka`)
+
+Event backbone. Uses **aiokafka** (async). Broker was already running from Phase 1.
+
+- **5.1 Local broker** — done in Phase 1; in Phase 5 changed the host-advertised listener
+  to `PLAINTEXT_HOST://127.0.0.1:29092` (was `localhost`) so host clients connect over IPv4.
+- **5.2 Create topics** — `echoscope_kafka/topics.py` defines specs + `ensure_topics()`
+  (idempotent); `kafka/create_topics.py` runs it. Created (partitions per HLD §7.2):
+  mention-created(6), sentiment-processed(6), analytics-updated(3), alert-triggered(3),
+  report-generated(2) — plus a `<name>.dlt` for each. Verified counts in-broker.
+- **5.3 Producer utility** — `echoscope_kafka/producer.py` `EventProducer`: JSON serialize,
+  auto-adds `event_id` + `timestamp`, `enable_idempotence`/`acks=all`, exponential retry on
+  transient errors, graceful start/stop (async context manager).
+- **5.4 Consumer base class** — `echoscope_kafka/consumer.py` `BaseConsumer` (abstract):
+  configurable `group_id`, `enable_auto_commit=False` (manual commit only after a successful
+  `handle`), and after `max_retries` failures publishes the message to `<topic>.dlt` and
+  commits (poison-message handling). Subclass + implement `handle(event)`.
+- **Verified** against the live broker: produce→consume round-trip (event_id/timestamp added,
+  payload intact) and the DLT flow (always-failing handler → message lands on the `.dlt` topic).
+
+Brokers: in Docker `kafka:9092`; from host `127.0.0.1:29092` (kafka/.env). Topics already exist.
+
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-5. Kafka Setup (topics, producer util, consumer base class)
 6. Mention Collection Service (keyword CRUD, scrapers, dedup, Celery, Kafka publish)
 7. NLP Service (Kafka consumer, sentiment, NER, keywords, GPT summary)
 8. Analytics Service (aggregation, spike detection, REST APIs, competitor scoring)

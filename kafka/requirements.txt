@@ -1,0 +1,3 @@
+# Shared Kafka package: topics, producer, consumer base class.
+-e ../common
+-e .
