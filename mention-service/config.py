@@ -19,8 +19,12 @@ class Settings(BaseAppSettings):
     reddit_client_id: str | None = None
     reddit_client_secret: str | None = None
     newsapi_key: str | None = None
+    # comma-separated RSS/Atom feed URLs (optional, keyless)
+    rss_feeds: str = ""
     scrape_interval_minutes: int = 30
     celery_broker_url: str = "redis://redis:6379/1"
+    # number of mock mentions to generate per keyword when no real source is configured
+    mock_mentions_per_keyword: int = 5
 
 
 @lru_cache

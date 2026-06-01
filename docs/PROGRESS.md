@@ -139,9 +139,33 @@ Event backbone. Uses **aiokafka** (async). Broker was already running from Phase
 
 Brokers: in Docker `kafka:9092`; from host `127.0.0.1:29092` (kafka/.env). Topics already exist.
 
+## ✅ Phase 6 — Mention Collection Service (`mention-service/`, :8002)
+
+- **6.1 Keyword CRUD** — `app/routers/keywords.py`: POST/GET/DELETE `/api/v1/keywords`
+  with org scoping + plan `max_keywords` enforcement + duplicate-keyword guard.
+- **6.2-6.4 Pluggable scrapers** — `app/sources/`: `MockSource` (keyless dev default),
+  `RedditSource` (PRAW), `NewsApiSource` (httpx), `RssSource` (feedparser). `registry.py`
+  activates real sources only when creds/feeds are in `.env`, else falls back to mock.
+  Playwright JS-rendering deferred.
+- **6.5 Dedup** — Redis `dedup:{sha256(url)}` SET NX EX 24h (`app/redis_client.py`) +
+  DB UNIQUE(source_url) backstop. Per-keyword scrape lock via Redis SETNX.
+- **6.6 Celery** — `app/celery_app.py`: worker + Beat schedule (`scrape_all` every
+  SCRAPE_INTERVAL_MINUTES); `scrape_keywords` task; `POST /mentions/scrape` enqueues it.
+- **6.7 Kafka publish** — `app/pipeline.py` publishes `mention-created` (key=org_id) after
+  each insert. Pipeline uses a raw **Core connection** (no ORM Session/unit-of-work).
+- Auth: trusts gateway-injected `X-User-*` headers (`app/deps.py`).
+- **Verified** end-to-end (`mention-service/manual_test.py`): CRUD + plan-limit 403 +
+  401 without headers; dedup; pipeline inserts mock mentions; 30 `mention-created` events
+  consumed from Kafka; scrape enqueue 202; keyword delete cascades.
+
+### ⚠️ Gotcha fixed (applies to all services using echoscope_db)
+Deleting a parent (e.g. Keyword) made the ORM try to `UPDATE child SET fk=NULL`, which
+violates NOT NULL. Fixed by adding **`passive_deletes=True`** to the one-to-many
+relationships in `echoscope_db/models.py` (Organization.users/keywords, Keyword.mentions,
+Mention.sentiment) so the ORM relies on the DB-level `ON DELETE CASCADE`.
+
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-6. Mention Collection Service (keyword CRUD, scrapers, dedup, Celery, Kafka publish)
 7. NLP Service (Kafka consumer, sentiment, NER, keywords, GPT summary)
 8. Analytics Service (aggregation, spike detection, REST APIs, competitor scoring)
 9. Real-Time WebSockets (WS endpoints, Redis bridge, frontend hook)

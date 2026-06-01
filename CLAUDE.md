@@ -33,7 +33,8 @@ The complete spec is the High-Level Design at **`docs/AI_Social_Listening_Platfo
 - ✅ **Phase 3 — Auth Service** (async SQLAlchemy + Alembic, register/login/refresh/logout, RBAC)
 - ✅ **Phase 4 — Database Schema** (central `db/` pkg `echoscope_db`: all 8 tables, migrations, Faker seed)
 - ✅ **Phase 5 — Kafka Setup** (central `kafka/` pkg `echoscope_kafka`: topics, producer, consumer base + DLT)
-- ⏭️ **NEXT: Phase 6 — Mention Collection Service** (keyword CRUD, scrapers, dedup, Celery, Kafka publish)
+- ✅ **Phase 6 — Mention Collection Service** (keyword CRUD, pluggable scrapers, dedup, Celery, Kafka publish)
+- ⏭️ **NEXT: Phase 7 — NLP Service** (Kafka consumer on mention-created, sentiment/NER/keywords, publish sentiment-processed)
 
 See `docs/PROGRESS.md` for full detail on what was built and what each next phase entails.
 

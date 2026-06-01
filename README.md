@@ -46,7 +46,7 @@ gRPC · Docker · Prometheus + Grafana.
 | **3** | **Auth Service** | ✅ done |
 | **4** | **Database Schema** | ✅ done |
 | **5** | **Kafka Setup** | ✅ done |
-| 6 | Mention Collection Service | ⬜ |
+| **6** | **Mention Collection Service** | ✅ done |
 | 7 | NLP Service | ⬜ |
 | 8 | Analytics Service | ⬜ |
 | 9 | Real-Time WebSockets | ⬜ |

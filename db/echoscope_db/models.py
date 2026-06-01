@@ -86,8 +86,10 @@ class Organization(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
     )
 
-    users: Mapped[list["User"]] = relationship(back_populates="org")
-    keywords: Mapped[list["Keyword"]] = relationship(back_populates="org")
+    # passive_deletes: rely on the DB-level ON DELETE CASCADE rather than having
+    # the ORM load children and null/delete them (which breaks NOT NULL FKs).
+    users: Mapped[list["User"]] = relationship(back_populates="org", passive_deletes=True)
+    keywords: Mapped[list["Keyword"]] = relationship(back_populates="org", passive_deletes=True)
 
 
 # ── users ─────────────────────────────────────────────────────────────────────
@@ -141,7 +143,7 @@ class Keyword(Base):
     )
 
     org: Mapped["Organization"] = relationship(back_populates="keywords")
-    mentions: Mapped[list["Mention"]] = relationship(back_populates="keyword")
+    mentions: Mapped[list["Mention"]] = relationship(back_populates="keyword", passive_deletes=True)
 
 
 # ── mentions ──────────────────────────────────────────────────────────────────
@@ -170,7 +172,7 @@ class Mention(Base):
 
     keyword: Mapped["Keyword"] = relationship(back_populates="mentions")
     sentiment: Mapped["SentimentResult | None"] = relationship(
-        back_populates="mention", uselist=False
+        back_populates="mention", uselist=False, passive_deletes=True
     )
 
 

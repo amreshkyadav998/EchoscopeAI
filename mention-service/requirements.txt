@@ -1,3 +1,21 @@
-# mention-service dependencies. Service-specific packages are added in this service's phase.
-# Shared utilities (logger, config, exceptions, schemas):
+# mention-service dependencies.
 -e ../common
+-e ../db
+-e ../kafka
+
+# Web framework + server
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
+# DB + cache
+asyncpg>=0.29
+redis>=5.0
+
+# Scraping sources
+httpx>=0.27          # NewsAPI
+feedparser>=6.0      # RSS/blogs
+praw>=7.7            # Reddit (only used if creds provided)
+faker>=24.0          # mock source (keyless dev)
+
+# Scheduling
+celery>=5.3
