@@ -1,8 +1,4 @@
-"""Alembic environment — async (asyncpg) online migrations.
-
-Reads the database URL from the service config (DB_URL) and uses the app's
-SQLAlchemy metadata as the autogenerate target.
-"""
+"""Alembic environment for the central platform schema (async asyncpg)."""
 
 from __future__ import annotations
 
@@ -17,11 +13,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-# make the service root importable (config.py, app/)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.models import Base  # noqa: E402
 from config import get_settings  # noqa: E402
+from echoscope_db.models import Base  # noqa: E402
 
 config = context.config
 if config.config_file_name is not None:

@@ -1,15 +1,15 @@
 # auth-service dependencies.
 # Shared utilities (logger, config, exceptions, schemas):
 -e ../common
+# Central DB models (Organization, User, ...); migrations live in db/:
+-e ../db
 
 # Web framework + server
 fastapi>=0.110
 uvicorn[standard]>=0.29
 
-# Database (async SQLAlchemy + asyncpg) + migrations
-sqlalchemy[asyncio]>=2.0
+# Database driver (async SQLAlchemy comes via echoscope_db)
 asyncpg>=0.29
-alembic>=1.13
 
 # Auth: password hashing, JWT, email validation
 bcrypt>=4.1

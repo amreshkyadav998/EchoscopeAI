@@ -1,0 +1,7 @@
+# Central DB package: models, migrations, seed.
+-e ../common
+-e .
+
+# Migrations + seeding
+alembic>=1.13
+faker>=24.0

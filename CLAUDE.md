@@ -31,7 +31,8 @@ The complete spec is the High-Level Design at **`docs/AI_Social_Listening_Platfo
 - ✅ **Phase 1 — Foundation & Setup** (monorepo, docker-compose, common pkg, per-service config)
 - ✅ **Phase 2 — API Gateway** (FastAPI scaffold, JWT auth, rate limiting, proxying)
 - ✅ **Phase 3 — Auth Service** (async SQLAlchemy + Alembic, register/login/refresh/logout, RBAC)
-- ⏭️ **NEXT: Phase 4 — Database Schema** (remaining 6 tables, indexes, Faker seed data)
+- ✅ **Phase 4 — Database Schema** (central `db/` pkg `echoscope_db`: all 8 tables, migrations, Faker seed)
+- ⏭️ **NEXT: Phase 5 — Kafka Setup** (topics, producer utility, consumer base class)
 
 See `docs/PROGRESS.md` for full detail on what was built and what each next phase entails.
 
@@ -45,6 +46,9 @@ See `docs/PROGRESS.md` for full detail on what was built and what each next phas
 - **Shared utilities** (`echoscope_common`): `configure_logging` (JSON logs),
   `BaseAppSettings`/`load_settings` (config), `AppError` hierarchy, `BaseSchema`/`HealthResponse`,
   correlation-ID contextvar, UUID helpers.
+- **Shared DB models** (`echoscope_db`, the `db/` package): ALL 8 SQLAlchemy models +
+  the single Alembic migration chain (`db/alembic`) + `db/seed.py`. Services import models
+  from here (e.g. `from echoscope_db.models import User`); do NOT add per-service Alembic.
 - **JWT contract:** tokens are HS256 with claims `sub` (user_id), `role`, `org_id`.
   The gateway validates these; the Auth service (Phase 3) issues them.
 - **GitHub:** https://github.com/amreshkyadav998/EchoscopeAI (branch `main`).

@@ -3,6 +3,10 @@
 Revision ID: 0001
 Revises:
 Create Date: 2026-06-01
+
+NOTE: identical to the migration originally applied by auth-service in Phase 3.
+Kept here so the central chain's base matches what is already in the database
+(alembic_version = 0001); it is a no-op on existing databases.
 """
 
 from typing import Sequence, Union
@@ -32,10 +36,7 @@ def upgrade() -> None:
         ),
         sa.Column("max_keywords", sa.Integer(), nullable=False, server_default="5"),
         sa.Column(
-            "created_at",
-            sa.TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=sa.text("NOW()"),
+            "created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("NOW()")
         ),
         sa.UniqueConstraint("name", name="uq_organizations_name"),
         sa.UniqueConstraint("slug", name="uq_organizations_slug"),
@@ -59,16 +60,10 @@ def upgrade() -> None:
         sa.Column("avatar_url", sa.Text(), nullable=True),
         sa.Column("last_login_at", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column(
-            "created_at",
-            sa.TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=sa.text("NOW()"),
+            "created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("NOW()")
         ),
         sa.Column(
-            "updated_at",
-            sa.TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=sa.text("NOW()"),
+            "updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("NOW()")
         ),
         sa.ForeignKeyConstraint(
             ["org_id"], ["organizations.id"], ondelete="CASCADE", name="fk_users_org_id"

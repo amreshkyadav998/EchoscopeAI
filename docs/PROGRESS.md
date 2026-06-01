@@ -93,12 +93,32 @@ Route map (gateway prefix → service): `/api/v1/auth`→auth, `/api/v1/keywords
 - **Middleware duplication:** `auth-service/app/middleware.py` mirrors the gateway's
   correlation/security middleware. Consider moving to `echoscope_common` and reusing.
 
+## ✅ Phase 4 — Database Schema (central `db/` package = `echoscope_db`)
+
+**Architectural decision:** created a central `db/` package as the single source of
+truth for ALL models + migrations + seed (rather than per-service). Every service
+imports models from `echoscope_db`; all migrations live in `db/alembic`.
+
+- **4.1 All 8 tables / migrations** — `echoscope_db/models.py` defines organizations,
+  users, keywords, mentions, sentiment_results, alert_rules, alerts, reports (+ enums:
+  plan, role, sentiment, alert_channel, report_type, report_status). Alembic chain:
+  `0001` (users+organizations — identical to Phase 3's, kept as the chain base so it's a
+  no-op on the existing DB) + `0002` (the other 6 tables). `alembic upgrade head` applied
+  only 0002. DB now has all 9 relations (8 tables + alembic_version).
+- **4.2 Indexes** — idx_users_email/org (0001); idx_keywords_org, idx_mentions_keyword_scraped,
+  idx_mentions_org_scraped, idx_mentions_published, uq_mentions_source_url, idx_sentiment_mention,
+  idx_alerts_org_triggered, idx_reports_org (0002).
+- **4.3 Seed data** — `db/seed.py` (Faker): TRUNCATEs then inserts 2 orgs, 5 users each
+  (first = admin, password `password123`), 10 keywords/org, **500 mentions + 1:1 sentiment**,
+  2 alert rules/org. Verified counts + sentiment distribution (~45/25/30) + joins.
+- **Refactor:** auth-service now imports models from `echoscope_db` (`app/models.py` is a
+  re-export shim); its local `alembic/`+`alembic.ini` were removed; requirements add
+  `-e ../db`. Re-verified auth register/login/me still work.
+
+> To reseed: `cd db && ../.venv/Scripts/python seed.py` (wipes data first).
+
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-4. Database Schema (remaining 6 tables — keywords, mentions, sentiment_results,
-   alert_rules, alerts, reports — indexes, Faker seed data). Note: `users` +
-   `organizations` already exist from Phase 3; add the rest (likely in a shared
-   migrations location or extend auth-service's alembic).
 5. Kafka Setup (topics, producer util, consumer base class)
 6. Mention Collection Service (keyword CRUD, scrapers, dedup, Celery, Kafka publish)
 7. NLP Service (Kafka consumer, sentiment, NER, keywords, GPT summary)
