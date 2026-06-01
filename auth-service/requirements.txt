@@ -1,3 +1,20 @@
-# auth-service dependencies. Service-specific packages are added in this service's phase.
+# auth-service dependencies.
 # Shared utilities (logger, config, exceptions, schemas):
 -e ../common
+
+# Web framework + server
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
+# Database (async SQLAlchemy + asyncpg) + migrations
+sqlalchemy[asyncio]>=2.0
+asyncpg>=0.29
+alembic>=1.13
+
+# Auth: password hashing, JWT, email validation
+bcrypt>=4.1
+pyjwt>=2.8
+email-validator>=2.1
+
+# Redis (refresh tokens + token blacklist)
+redis>=5.0

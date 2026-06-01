@@ -30,7 +30,8 @@ The complete spec is the High-Level Design at **`docs/AI_Social_Listening_Platfo
 
 - ✅ **Phase 1 — Foundation & Setup** (monorepo, docker-compose, common pkg, per-service config)
 - ✅ **Phase 2 — API Gateway** (FastAPI scaffold, JWT auth, rate limiting, proxying)
-- ⏭️ **NEXT: Phase 3 — Auth Service** (DB+Alembic, registration, login+JWT, refresh/logout, RBAC)
+- ✅ **Phase 3 — Auth Service** (async SQLAlchemy + Alembic, register/login/refresh/logout, RBAC)
+- ⏭️ **NEXT: Phase 4 — Database Schema** (remaining 6 tables, indexes, Faker seed data)
 
 See `docs/PROGRESS.md` for full detail on what was built and what each next phase entails.
 
@@ -66,7 +67,10 @@ cd api-gateway && ../.venv/Scripts/uvicorn main:app --port 8000   # /docs for Op
 .venv/Scripts/python.exe <service>/config.py
 ```
 
-Host ports: Postgres `5432`, Redis `6379`, Kafka `29092` (in-network: `kafka:9092`).
+Host ports: Postgres **`5433`** (native PG 17 holds 5432 on this machine), Redis `6379`,
+Kafka `29092` (in-network: `kafka:9092`). From the host use **`127.0.0.1`** not `localhost`
+for Postgres (container publishes IPv4-only; `localhost` may resolve to IPv6 on Windows).
+Apply auth migrations: `cd auth-service && DB_URL=postgresql+asyncpg://echoscope:echoscope@127.0.0.1:5433/echoscope JWT_SECRET=dev ../.venv/Scripts/python -m alembic upgrade head`
 Service ports: gateway 8000, auth 8001, mention 8002, nlp 8003, analytics 8004,
 notification 8005, report 8006.
 

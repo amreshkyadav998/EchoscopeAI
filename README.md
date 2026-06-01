@@ -43,7 +43,7 @@ gRPC · Docker · Prometheus + Grafana.
 |-------|-------|--------|
 | **1** | **Foundation & Setup** | ✅ done |
 | **2** | **API Gateway** | ✅ done |
-| 3 | Auth Service | ⬜ |
+| **3** | **Auth Service** | ✅ done |
 | 4 | Database Schema | ⬜ |
 | 5 | Kafka Setup | ⬜ |
 | 6 | Mention Collection Service | ⬜ |

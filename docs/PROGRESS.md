@@ -54,29 +54,51 @@ Route map (gateway prefix → service): `/api/v1/auth`→auth, `/api/v1/keywords
 
 ---
 
-## ⏭️ NEXT — Phase 3: Auth Service (`auth-service/`, ~3 days)
+## ✅ Phase 3 — Auth Service (`auth-service/`)
 
-Issues the JWTs the gateway validates. Steps (HLD 4.2 / page 18):
-1. **DB + Alembic** — async SQLAlchemy + asyncpg. Alembic migration for `users` +
-   `organizations` (all constraints from schema in HLD §6).
-2. **Registration** — email uniqueness, bcrypt hash (cost=12), create org + user in one
-   transaction, (verification email stub for now).
-3. **Login + JWT** — `bcrypt.checkpw`; access token HS256 15 min (claims `sub`/`role`/
-   `org_id`); refresh token (UUID4) in Redis HASH, 7-day TTL.
-4. **Refresh / Logout** — `/refresh` validates + rotates; `/logout` deletes Redis key
-   (+ blacklist).
-5. **RBAC** — role ENUM in DB; `require_role` dependency; role in JWT claim.
+- **3.1 DB + Alembic** — async SQLAlchemy 2.0 + asyncpg (`app/db.py`, `app/models.py`:
+  `Organization`, `User`, enums `Plan`/`Role`). Async Alembic (`alembic/env.py` +
+  `versions/0001_users_organizations.py`) creates both tables + enums + indexes
+  (`idx_users_email`, `idx_users_org`). Columns match HLD §6.
+- **3.2 Registration** — `POST /register`: email-uniqueness check, bcrypt hash (cost=12),
+  creates org + user in one transaction, **first user = org admin**. Verification email
+  is a logged stub (real SendGrid send is Phase 10).
+- **3.3 Login + JWT** — `POST /login`: `bcrypt.checkpw`, issues HS256 access token (15 min,
+  claims `sub`/`role`/`org_id`/`jti`) + UUID4 refresh token stored in Redis HASH (7-day TTL);
+  updates `last_login_at`. `app/security.py`.
+- **3.4 Refresh / Logout** — `POST /refresh` validates + **rotates** the refresh token
+  (old becomes invalid); `POST /logout` deletes the refresh token and **blacklists** the
+  access jti (`blacklist:{jti}` for remaining TTL). `app/redis_client.py`.
+- **3.5 RBAC** — `Role` enum in DB; `require_role(*roles)` dependency (`app/deps.py`);
+  role embedded as a JWT claim.
+- Endpoints (HLD §5.1): `register`, `login`, `refresh`, `logout`, `change-password`,
+  `GET/PUT /me`. `app/routers/auth.py`. Service runs on :8001.
+- **Verified** (18 checks) end-to-end vs real Postgres + Redis: register/dup-409,
+  login/wrong-pw-401, JWT claims, /me (+401 no token), PUT /me, refresh rotation
+  (old→401), change-password (old pw→401), logout → access blacklisted (401) + refresh
+  deleted (401), `require_role` admin OK / viewer→403.
 
-Endpoints (HLD §5.1): `POST /api/v1/auth/register|login|refresh|logout|change-password`,
-`GET|PUT /api/v1/auth/me`.
+### ⚠️ Environment gotchas discovered (important for any new session)
+- **Postgres host port = 5433**, not 5432: this machine runs a native PostgreSQL 17 on
+  5432. Local `.env` sets `POSTGRES_PORT=5433`; committed `.env.example` defaults stay 5432.
+- **Use `127.0.0.1` (not `localhost`) from the host** for Postgres: the container publishes
+  on IPv4 only and Windows resolves `localhost` to IPv6 `::1` first → connection reset.
+  (Redis at `localhost:6379` is unaffected.)
 
-> Note: DB tables for the *whole* system (8 tables) are formally Phase 4. Phase 3 only
-> needs `users` + `organizations`; align column definitions with HLD §6 so Phase 4 just
-> adds the rest.
+### 🔧 Known follow-ups (not blocking)
+- **Gateway↔Auth token handling:** the gateway (Phase 2.4) strips `Authorization` and
+  injects `X-User-*`. Auth-service currently validates the bearer locally (needed for
+  logout jti + self-contained testing). Reconcile later: either exempt the auth route from
+  Authorization-stripping at the gateway, or have services trust `X-User-*`.
+- **Middleware duplication:** `auth-service/app/middleware.py` mirrors the gateway's
+  correlation/security middleware. Consider moving to `echoscope_common` and reusing.
 
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-4. Database Schema (all 8 migrations, indexes, Faker seed data)
+4. Database Schema (remaining 6 tables — keywords, mentions, sentiment_results,
+   alert_rules, alerts, reports — indexes, Faker seed data). Note: `users` +
+   `organizations` already exist from Phase 3; add the rest (likely in a shared
+   migrations location or extend auth-service's alembic).
 5. Kafka Setup (topics, producer util, consumer base class)
 6. Mention Collection Service (keyword CRUD, scrapers, dedup, Celery, Kafka publish)
 7. NLP Service (Kafka consumer, sentiment, NER, keywords, GPT summary)
