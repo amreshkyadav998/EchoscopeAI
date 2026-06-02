@@ -1,3 +1,15 @@
-# notification-service dependencies. Service-specific packages are added in this service's phase.
-# Shared utilities (logger, config, exceptions, schemas):
+# notification-service dependencies.
 -e ../common
+-e ../db
+-e ../kafka
+
+# Web framework + server (with WebSocket support)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+websockets>=12.0
+
+# Cache / pub-sub
+redis>=5.0
+
+# JWT validation on the WS handshake
+pyjwt>=2.8

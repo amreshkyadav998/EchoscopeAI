@@ -204,9 +204,25 @@ Consumes `sentiment-processed`; computes analytics over mentions+sentiment_resul
   top keywords, sources, competitor scores in [0,1], spikes), 401 w/o headers, cache key
   written, synthetic 40× spike flagged (z=4.9), publisher emits analytics-updated (consumed).
 
+## ✅ Phase 9 — Real-Time WebSockets (`notification-service/`, :8005)
+
+- **WS endpoints** (`app/ws.py`): `/ws/dashboard` + `/ws/alerts`. JWT validated on the
+  handshake via `?token=` (`app/security.py`); subscribes to the org's Redis channel BEFORE
+  accept (no missed messages) and forwards live; ping→pong keepalive; org-isolated.
+- **Kafka→Redis bridge** (`app/bridge.py`): `analytics-updated` → `ws:channel:{org}`
+  (`metrics_update`); `alert-triggered` → `ws:alerts:{org}` (`alert`). Two BaseConsumers
+  (group `notification-service`) run as lifespan background tasks.
+- **Frontend hook**: `frontend/src/hooks/useWebSocket.ts` — auto-reconnect (exp backoff
+  1→30s + ±20% jitter), ping/pong, onMessage dispatch. (Full app = Phase 13.)
+- Config: added `jwt_secret` (must match auth-service); `websockets` dep.
+- **Verified** (`notification-service/manual_test.py`): bridge → Redis publish; WS rejects
+  missing/invalid token; valid token receives forwarded messages; ping→pong; /ws/alerts
+  delivery; **org isolation**.
+
+> Workflow note: Phase 9+ built on per-phase branches (stacked) for PR-merge into main.
+
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-9. Real-Time WebSockets (WS endpoints, Redis bridge, frontend hook)
 10. Notification Service (alert rules, evaluation engine, SendGrid email, history)
 11. Report Service (async PDF/CSV, S3 + pre-signed URLs)
 12. gRPC Communication (proto defs, servers, clients, error mapping)

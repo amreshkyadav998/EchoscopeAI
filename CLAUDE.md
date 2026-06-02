@@ -36,7 +36,10 @@ The complete spec is the High-Level Design at **`docs/AI_Social_Listening_Platfo
 - ✅ **Phase 6 — Mention Collection Service** (keyword CRUD, pluggable scrapers, dedup, Celery, Kafka publish)
 - ✅ **Phase 7 — NLP Service** (mention-created consumer; VADER sentiment default, optional RoBERTa/spaCy/GPT; publishes sentiment-processed)
 - ✅ **Phase 8 — Analytics Service** (sentiment-processed consumer; Pandas aggregation, spike detection, competitor scoring, 7 REST endpoints + cache-aside; publishes analytics-updated/alert-triggered)
-- ⏭️ **NEXT: Phase 9 — Real-Time WebSockets** (WS endpoints, Redis pub/sub bridge, frontend hook)
+- ✅ **Phase 9 — Real-Time WebSockets** (notification-service: /ws/dashboard + /ws/alerts, JWT handshake, Kafka→Redis pub/sub bridge, useWebSocket hook)
+- ⏭️ **NEXT: Phase 10 — Notification Service** (alert-rule CRUD, evaluation engine, SendGrid email, alert history)
+
+> Branch workflow: each phase on its own (stacked) branch, pushed for PR-merge into main. Don't pause to ask between phases — keep going.
 
 See `docs/PROGRESS.md` for full detail on what was built and what each next phase entails.
 
