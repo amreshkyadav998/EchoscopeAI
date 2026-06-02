@@ -20,6 +20,11 @@ class Settings(BaseAppSettings):
     trend_window_hours: int = 24
     cache_ttl: int = 300
 
+    # kafka consumer + periodic publisher
+    consumer_group: str = "analytics-service"
+    enable_consumer: bool = True
+    analytics_interval_seconds: int = 300   # publish analytics-updated every 5 min
+
 
 @lru_cache
 def get_settings() -> Settings:

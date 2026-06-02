@@ -1,3 +1,16 @@
-# analytics-service dependencies. Service-specific packages are added in this service's phase.
-# Shared utilities (logger, config, exceptions, schemas):
+# analytics-service dependencies.
 -e ../common
+-e ../db
+-e ../kafka
+
+# Web framework + server
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
+# DB + cache
+asyncpg>=0.29
+redis>=5.0
+
+# Aggregation / stats
+pandas>=2.1
+numpy>=1.26
