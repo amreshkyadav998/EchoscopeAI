@@ -184,9 +184,28 @@ Consumes `mention-created`, analyzes, writes `sentiment_results`, publishes
   batch+jobs; process_event writes sentiment + publishes; idempotent reprocess; summary
   for long content; sentiment-processed event consumed.
 
+## ✅ Phase 8 — Analytics Service (`analytics-service/`, :8004)
+
+Consumes `sentiment-processed`; computes analytics over mentions+sentiment_results.
+
+- **Computations** (`app/analytics.py`, Pandas): `load_frame()` then overview, trends
+  (hour/day/week), sentiment breakdown, top keywords, sources, **Z-score spike detection**
+  (per-keyword hourly counts, mean+2σ), **competitor scoring** (0.6×mentions_norm +
+  0.4×sentiment_norm, ranked).
+- **Cache** (`app/cache.py`): Redis cache-aside (5-min TTL), hourly counters, per-org invalidation.
+- **Consumer** (`app/consumer.py`): on `sentiment-processed` bump hourly counter + invalidate cache.
+- **Publisher** (`app/publisher.py`): periodic — publish `analytics-updated` per org +
+  `alert-triggered` on spikes (Redis debounce 10 min). Runs as a background task.
+- **REST** (`app/routers/analytics.py`, HLD §5.4): 7 endpoints (`/overview /trends /sentiment
+  /keywords/top /spikes /competitors /sources`), X-User-* auth, cache-aside.
+- Also added `keyword_id` to the nlp-service `sentiment-processed` payload (needed for spikes).
+- **Verified** (`analytics-service/manual_test.py`) against seed data: all 7 endpoints return
+  sensible values (overview 249 mentions/51% pos, 30 trend points, sentiment sums to total,
+  top keywords, sources, competitor scores in [0,1], spikes), 401 w/o headers, cache key
+  written, synthetic 40× spike flagged (z=4.9), publisher emits analytics-updated (consumed).
+
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-8. Analytics Service (aggregation, spike detection, REST APIs, competitor scoring)
 9. Real-Time WebSockets (WS endpoints, Redis bridge, frontend hook)
 10. Notification Service (alert rules, evaluation engine, SendGrid email, history)
 11. Report Service (async PDF/CSV, S3 + pre-signed URLs)

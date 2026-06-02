@@ -63,6 +63,7 @@ async def process_event(event: dict, producer: EventProducer) -> bool:
         {
             "mention_id": mention_id,
             "org_id": event.get("org_id"),
+            "keyword_id": event.get("keyword_id"),
             "sentiment": result.sentiment,
             "confidence": result.confidence,
             "positive_score": result.positive_score,
