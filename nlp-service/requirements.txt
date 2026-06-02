@@ -1,3 +1,22 @@
-# nlp-service dependencies. Service-specific packages are added in this service's phase.
-# Shared utilities (logger, config, exceptions, schemas):
+# nlp-service dependencies.
 -e ../common
+-e ../db
+-e ../kafka
+
+# Web framework + server
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
+# DB + cache
+asyncpg>=0.29
+redis>=5.0
+
+# Lightweight sentiment (pure-Python, offline — the default analyzer)
+vaderSentiment>=3.3
+httpx>=0.27          # optional GPT summarisation
+
+# OPTIONAL heavy models — NOT installed by default (large downloads).
+# Enable with NLP_USE_TRANSFORMERS / NLP_USE_SPACY and install manually:
+#   pip install "transformers>=4.40" torch        # RoBERTa sentiment
+#   pip install spacy && python -m spacy download en_core_web_sm   # NER
+#   pip install keybert                            # semantic keywords

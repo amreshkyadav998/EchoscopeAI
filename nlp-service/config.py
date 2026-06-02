@@ -15,11 +15,21 @@ class Settings(BaseAppSettings):
 
     # optional
     kafka_brokers: str = "kafka:9092"
+    redis_url: str = "redis://redis:6379/0"
     openai_api_key: str | None = None
     hf_model_name: str = "cardiffnlp/twitter-roberta-base-sentiment-latest"
     gpu_enabled: bool = False
     max_text_length: int = 512
     summary_cache_ttl: int = 3600
+    summary_min_chars: int = 500
+
+    # heavy-model toggles (default lightweight/offline)
+    use_transformers: bool = False   # HuggingFace RoBERTa sentiment
+    use_spacy: bool = False          # spaCy NER (needs en_core_web_sm)
+
+    # kafka consumer
+    consumer_group: str = "nlp-service"
+    enable_consumer: bool = True     # run the mention-created consumer in-process
 
 
 @lru_cache

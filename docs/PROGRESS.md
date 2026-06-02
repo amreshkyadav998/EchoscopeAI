@@ -164,9 +164,28 @@ violates NOT NULL. Fixed by adding **`passive_deletes=True`** to the one-to-many
 relationships in `echoscope_db/models.py` (Organization.users/keywords, Keyword.mentions,
 Mention.sentiment) so the ORM relies on the DB-level `ON DELETE CASCADE`.
 
+## ✅ Phase 7 — NLP Service (`nlp-service/`, :8003)
+
+Consumes `mention-created`, analyzes, writes `sentiment_results`, publishes
+`sentiment-processed`. **Lightweight/offline by default; heavy models opt-in.**
+
+- **Analyzers** (`app/analysis.py`): sentiment = VADER (default) or HuggingFace RoBERTa
+  (`USE_TRANSFORMERS`); NER = regex (default) or spaCy (`USE_SPACY`); keywords =
+  stopword-filtered frequency top-5; summary = extractive (default) or GPT-4o-mini
+  (`OPENAI_API_KEY`). Heavy libs are lazy-loaded and not in default requirements.
+- **Processor** (`app/processor.py`): `process_event()` inserts `sentiment_results` via
+  Core `ON CONFLICT DO NOTHING` (idempotent 1:1), caches summary in Redis
+  (`nlp:summary:{id}`), publishes `sentiment-processed` (key=mention_id).
+- **Consumer** (`app/consumer.py`): `NlpConsumer(BaseConsumer)` on `mention-created`
+  (group `nlp-service`), runs as an in-process background task in the lifespan.
+- **REST** (`app/routers/nlp.py`, HLD §5.3): `POST /analyze`, `POST /batch` +
+  `GET /jobs/{id}`, `GET /summary/{mention_id}`. Auth via X-User-* headers.
+- **Verified** (`nlp-service/manual_test.py`): /analyze sentiment; 401 without headers;
+  batch+jobs; process_event writes sentiment + publishes; idempotent reprocess; summary
+  for long content; sentiment-processed event consumed.
+
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-7. NLP Service (Kafka consumer, sentiment, NER, keywords, GPT summary)
 8. Analytics Service (aggregation, spike detection, REST APIs, competitor scoring)
 9. Real-Time WebSockets (WS endpoints, Redis bridge, frontend hook)
 10. Notification Service (alert rules, evaluation engine, SendGrid email, history)
