@@ -49,7 +49,7 @@ gRPC · Docker · Prometheus + Grafana.
 | **6** | **Mention Collection Service** | ✅ done |
 | **7** | **NLP Service** | ✅ done |
 | **8** | **Analytics Service** | ✅ done |
-| 9 | Real-Time WebSockets | ⬜ |
+| **9** | **Real-Time WebSockets** | ✅ done |
 | 10 | Notification Service | ⬜ |
 | 11 | Report Service | ⬜ |
 | 12 | gRPC Communication | ⬜ |
