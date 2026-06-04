@@ -276,8 +276,24 @@ Internal service-to-service gRPC (HLD §9/§12).
   (summary total=229, trends 28 pts, sentiment batch positive/negative/neutral, NER found
   "Acme Corporation"/"London"), plus status mapping.
 
+## ✅ Phase 13 — Frontend (`frontend/`)
+
+**Next.js 14 (App Router) + TypeScript + Tailwind** with **dark/light mode** — built in
+Next.js per the owner's request (HLD said Vite).
+
+- Stack: `next-themes`, Zustand (persisted auth store), TanStack React Query, Axios client
+  with JWT attach + **auto-refresh on 401** (`src/lib/api.ts`), Recharts, react-hot-toast,
+  lucide-react.
+- Pages: `/login`, `/register`, `/dashboard` (KPIs + area chart + recent alerts + live WS
+  badge), `/mentions` (filter+paginate), `/analytics` (Trends/Sentiment/Keywords/Sources
+  tabs), `/alerts` (rule CRUD + history), `/reports` (generate PDF/CSV + poll + download).
+- Real-time: `useWebSocket` (from Phase 9) + `useDashboardSocket` → notification WS,
+  invalidates analytics queries on `metrics_update`.
+- `components/html-content.tsx`: `dangerouslySetInnerHTML` for trusted server HTML.
+- **Verified**: `npm run build` compiles all 11 routes, TypeScript valid. (No browser E2E
+  here; run `npm run dev` against the live gateway :8000 + notification WS :8005.)
+
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-13. Frontend Development (Vite+React+TS, auth/dashboard/mentions/analytics/alerts pages)
 14. Monitoring & Logging (Prometheus, Grafana, Loki, health checks)
 15. AWS Deployment + CI/CD (Dockerfiles, ECR, RDS/ElastiCache/MSK/S3/ALB, ECS, GH Actions)
