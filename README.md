@@ -53,7 +53,7 @@ gRPC · Docker · Prometheus + Grafana.
 | **10** | **Notification Service** | ✅ done |
 | **11** | **Report Service** | ✅ done |
 | **12** | **gRPC Communication** | ✅ done |
-| 13 | Frontend Development | ⬜ |
+| **13** | **Frontend Development** | ✅ done |
 | 14 | Monitoring & Logging | ⬜ |
 | 15 | AWS Deployment + CI/CD | ⬜ |
 

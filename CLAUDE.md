@@ -40,7 +40,10 @@ The complete spec is the High-Level Design at **`docs/AI_Social_Listening_Platfo
 - ✅ **Phase 10 — Notification Service** (alert-rule CRUD, evaluation engine on analytics-updated w/ debounce, SendGrid email stub, alert history keyset pagination)
 - ✅ **Phase 11 — Report Service** (async PDF (fpdf2+matplotlib)/CSV via Celery, S3-or-local storage + pre-signed URLs, report-generated event)
 - ✅ **Phase 12 — gRPC Communication** (shared `rpc/` pkg `echoscope_rpc`; Analytics :50051 + NLP :50052 servers; Report/Notification clients; retry + status mapping)
-- ⏭️ **NEXT: Phase 13 — Frontend Development** (Vite+React+TS dashboard — auth, dashboard, mentions, analytics, alerts, reports)
+- ✅ **Phase 13 — Frontend** (Next.js 14 + TS + Tailwind, dark/light; auth/dashboard/mentions/analytics/alerts/reports; React Query + Zustand + Recharts; build passes)
+- ⏭️ **NEXT: Phase 14 — Monitoring & Logging** (Prometheus metrics, Grafana, Loki, health checks)
+
+> Frontend is **Next.js** (App Router), NOT Vite — per owner request. `cd frontend && npm run dev` (needs gateway :8000 + notification WS :8005).
 
 > Branch workflow: each phase on its own (stacked) branch, pushed for PR-merge into main. Don't pause to ask between phases — keep going.
 
