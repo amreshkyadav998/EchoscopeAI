@@ -16,8 +16,16 @@ Real-time delivery + (Phase 10) alerting. Phase 9 = WebSockets + Kafka→Redis b
 Frontend hook: `frontend/src/hooks/useWebSocket.ts` (auto-reconnect w/ backoff+jitter,
 ping/pong) — the full frontend app is Phase 13.
 
-## Phase 10 (next)
-Alert-rule CRUD, evaluation engine, SendGrid email, alert history.
+## Phase 10 — Alerting (HLD §4.6 / §5.5)
+
+- `app/routers/alerts.py` — rule CRUD (`GET/POST/PUT/DELETE /api/v1/alerts/rules`) +
+  `GET /api/v1/alerts/history` (keyset pagination on `triggered_at`, `cursor` param).
+- `app/evaluation.py` — evaluation engine: on `analytics-updated`, match enabled org rules
+  (`volume` / `negative_pct` / `spike`), **debounce** (Redis, 1/rule/10 min), persist an
+  `alerts` row, push to `ws:alerts:{org}`, and email org admins.
+- `app/eval_consumer.py` — `EvalConsumer` on `analytics-updated` (group
+  `notification-service-eval`, separate from the WS bridge so both receive every event).
+- `app/email.py` — Jinja2 HTML alert; SendGrid HTTP API if `SENDGRID_API_KEY`, else logs (stub).
 
 ## Run (host)
 

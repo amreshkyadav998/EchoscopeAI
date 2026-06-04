@@ -50,7 +50,7 @@ gRPC · Docker · Prometheus + Grafana.
 | **7** | **NLP Service** | ✅ done |
 | **8** | **Analytics Service** | ✅ done |
 | **9** | **Real-Time WebSockets** | ✅ done |
-| 10 | Notification Service | ⬜ |
+| **10** | **Notification Service** | ✅ done |
 | 11 | Report Service | ⬜ |
 | 12 | gRPC Communication | ⬜ |
 | 13 | Frontend Development | ⬜ |
