@@ -52,3 +52,7 @@ Start-Process powershell -ArgumentList @(
 Write-Host ""
 Write-Host "All started. Open http://localhost:3000 (register, then explore)." -ForegroundColor Green
 Write-Host "API docs: http://localhost:8000/docs   |   stop: scripts\stop-all.ps1" -ForegroundColor Green
+
+
+# email:    user0.sell-sister-job-0@example.com
+# password: password123
