@@ -39,7 +39,8 @@ The complete spec is the High-Level Design at **`docs/AI_Social_Listening_Platfo
 - ✅ **Phase 9 — Real-Time WebSockets** (notification-service: /ws/dashboard + /ws/alerts, JWT handshake, Kafka→Redis pub/sub bridge, useWebSocket hook)
 - ✅ **Phase 10 — Notification Service** (alert-rule CRUD, evaluation engine on analytics-updated w/ debounce, SendGrid email stub, alert history keyset pagination)
 - ✅ **Phase 11 — Report Service** (async PDF (fpdf2+matplotlib)/CSV via Celery, S3-or-local storage + pre-signed URLs, report-generated event)
-- ⏭️ **NEXT: Phase 12 — gRPC Communication** (proto defs, Analytics/NLP gRPC servers, Report/Notification clients, error mapping)
+- ✅ **Phase 12 — gRPC Communication** (shared `rpc/` pkg `echoscope_rpc`; Analytics :50051 + NLP :50052 servers; Report/Notification clients; retry + status mapping)
+- ⏭️ **NEXT: Phase 13 — Frontend Development** (Vite+React+TS dashboard — auth, dashboard, mentions, analytics, alerts, reports)
 
 > Branch workflow: each phase on its own (stacked) branch, pushed for PR-merge into main. Don't pause to ask between phases — keep going.
 
@@ -61,6 +62,9 @@ See `docs/PROGRESS.md` for full detail on what was built and what each next phas
 - **Shared Kafka utils** (`echoscope_kafka`, the `kafka/` package): topic specs + `ensure_topics`,
   `EventProducer` (auto event_id/timestamp, retry), `BaseConsumer` (manual commit + DLT).
   Topics already created on the broker. Use `aiokafka`. Services import from `echoscope_kafka`.
+- **Shared gRPC** (`echoscope_rpc`, the `rpc/` package): protos + generated stubs +
+  client helpers (`channel`, `with_retry`, `grpc_status_to_http`). Analytics gRPC :50051,
+  NLP gRPC :50052. Regenerate stubs: `cd rpc && ../.venv/Scripts/python generate.py`.
 - **JWT contract:** tokens are HS256 with claims `sub` (user_id), `role`, `org_id`.
   The gateway validates these; the Auth service (Phase 3) issues them.
 - **GitHub:** https://github.com/amreshkyadav998/EchoscopeAI (branch `main`).

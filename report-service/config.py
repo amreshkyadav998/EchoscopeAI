@@ -26,6 +26,9 @@ class Settings(BaseAppSettings):
     reports_dir: str = "data/reports"
     presigned_ttl: int = 86400  # 24h
 
+    # gRPC client (Phase 12) — embed live analytics summary in the PDF
+    analytics_grpc_addr: str = "analytics-service:50051"
+
 
 @lru_cache
 def get_settings() -> Settings:

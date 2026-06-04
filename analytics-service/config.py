@@ -25,6 +25,10 @@ class Settings(BaseAppSettings):
     enable_consumer: bool = True
     analytics_interval_seconds: int = 300   # publish analytics-updated every 5 min
 
+    # gRPC server (HLD §12)
+    enable_grpc: bool = True
+    grpc_port: int = 50051
+
 
 @lru_cache
 def get_settings() -> Settings:

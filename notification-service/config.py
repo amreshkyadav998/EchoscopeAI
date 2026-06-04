@@ -27,6 +27,9 @@ class Settings(BaseAppSettings):
     consumer_group: str = "notification-service"
     enable_consumer: bool = True
 
+    # gRPC client (Phase 12) — enrich alerts with live analytics
+    analytics_grpc_addr: str = "analytics-service:50051"
+
 
 @lru_cache
 def get_settings() -> Settings:

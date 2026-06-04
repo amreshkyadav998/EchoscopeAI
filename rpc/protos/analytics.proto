@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package analytics.v1;
+
+service AnalyticsService {
+  rpc GetAnalyticsSummary (SummaryRequest) returns (SummaryResponse);
+  rpc GetTrends (TrendsRequest) returns (TrendsResponse);
+  rpc GetCurrentMetrics (MetricsRequest) returns (MetricsResponse);
+}
+
+message SummaryRequest {
+  string org_id = 1;
+  string from_date = 2;
+  string to_date = 3;
+}
+
+message SummaryResponse {
+  int64 total_mentions = 1;
+  float positive_pct = 2;
+  float negative_pct = 3;
+  float avg_per_day = 4;
+  bool spike_detected = 5;
+}
+
+message TrendsRequest {
+  string org_id = 1;
+  string granularity = 2;  // hour | day | week
+  string from_date = 3;
+}
+
+message TrendPoint {
+  string time = 1;
+  int64 count = 2;
+  int64 positive = 3;
+  int64 negative = 4;
+  int64 neutral = 5;
+}
+
+message TrendsResponse {
+  repeated TrendPoint datapoints = 1;
+}
+
+message MetricsRequest {
+  string org_id = 1;
+}
+
+message MetricsResponse {
+  int64 total_mentions = 1;
+  float positive_pct = 2;
+  float negative_pct = 3;
+  int64 spike_count = 4;
+}

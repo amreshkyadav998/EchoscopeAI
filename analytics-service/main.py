@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
     log.info("analytics-service starting", environment=settings.environment)
     init_redis(settings.redis_url)
 
-    consumer = producer = None
+    consumer = producer = grpc_server = None
     tasks: list[asyncio.Task] = []
     if settings.enable_consumer:
         consumer = AnalyticsConsumer()
@@ -54,9 +54,16 @@ async def lifespan(app: FastAPI):
         tasks.append(asyncio.create_task(_periodic_publisher(producer)))
         log.info("consumer + periodic publisher started", group=settings.consumer_group)
 
+    if settings.enable_grpc:
+        from app.grpc_server import serve_grpc
+
+        grpc_server = await serve_grpc(settings.grpc_port)
+
     try:
         yield
     finally:
+        if grpc_server is not None:
+            await grpc_server.stop(grace=2)
         if consumer is not None:
             await consumer.stop()
         for task in tasks:

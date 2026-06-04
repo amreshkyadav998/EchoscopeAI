@@ -31,6 +31,10 @@ class Settings(BaseAppSettings):
     consumer_group: str = "nlp-service"
     enable_consumer: bool = True     # run the mention-created consumer in-process
 
+    # gRPC server (HLD §12)
+    enable_grpc: bool = True
+    grpc_port: int = 50052
+
 
 @lru_cache
 def get_settings() -> Settings:

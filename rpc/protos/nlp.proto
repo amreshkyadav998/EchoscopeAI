@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package nlp.v1;
+
+service NlpService {
+  rpc GetSentimentBatch (SentimentBatchRequest) returns (SentimentBatchResponse);
+  rpc GetEntitiesForMention (EntitiesRequest) returns (EntitiesResponse);
+}
+
+message SentimentBatchRequest {
+  repeated string texts = 1;
+}
+
+message SentimentResult {
+  string sentiment = 1;       // positive | negative | neutral
+  float confidence = 2;
+  repeated string keywords = 3;
+}
+
+message SentimentBatchResponse {
+  repeated SentimentResult results = 1;
+}
+
+message EntitiesRequest {
+  string text = 1;
+}
+
+message Entity {
+  string text = 1;
+  string label = 2;
+  float score = 3;
+}
+
+message EntitiesResponse {
+  repeated Entity entities = 1;
+}

@@ -112,6 +112,12 @@ async def evaluate_event(event: dict) -> int:
                 "mention_count": mention_count,
                 "triggered_at": triggered_at.isoformat(),
             }
+            # enrich with live analytics over gRPC (best-effort)
+            from app.grpc_client import get_current_metrics
+
+            live = await get_current_metrics(org_id)
+            if live:
+                payload["live_metrics"] = live
             if "websocket" in channels:
                 await publish_ws(alerts_channel(org_id), {"type": "alert", "payload": payload})
             if "email" in channels and admin_emails:

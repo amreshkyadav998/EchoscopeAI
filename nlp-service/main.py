@@ -33,15 +33,23 @@ async def lifespan(app: FastAPI):
 
     consumer: NlpConsumer | None = None
     consumer_task: asyncio.Task | None = None
+    grpc_server = None
     if settings.enable_consumer:
         consumer = NlpConsumer()
         await consumer.start()
         consumer_task = asyncio.create_task(consumer.run())
         log.info("mention-created consumer started", group=settings.consumer_group)
 
+    if settings.enable_grpc:
+        from app.grpc_server import serve_grpc
+
+        grpc_server = await serve_grpc(settings.grpc_port)
+
     try:
         yield
     finally:
+        if grpc_server is not None:
+            await grpc_server.stop(grace=2)
         if consumer is not None:
             await consumer.stop()
         if consumer_task is not None:
