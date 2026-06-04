@@ -9,7 +9,7 @@ and the correlation ID is propagated.
 from __future__ import annotations
 
 import httpx
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Request, Response
 
 from app.dependencies.auth import CurrentUser, get_current_user
 from app.dependencies.rate_limit import rate_limit
@@ -28,6 +28,18 @@ ROUTE_MAP: list[tuple[str, str]] = [
     ("/api/v1/alerts", "notification"),
     ("/api/v1/reports", "report"),
 ]
+
+# Public routes — no JWT required (chicken-and-egg: you have no token yet)
+_PUBLIC_PATHS = {
+    "/api/v1/auth/register",
+    "/api/v1/auth/login",
+    "/api/v1/auth/refresh",
+}
+
+
+def _is_public(path: str) -> bool:
+    return path.rstrip("/") in _PUBLIC_PATHS
+
 
 # Request headers we never forward upstream (hop-by-hop + auth stripped on purpose)
 _EXCLUDED_REQUEST_HEADERS = {
@@ -59,7 +71,7 @@ def resolve_service(path: str) -> str:
     raise NotFoundError(f"No route configured for path: {path}")
 
 
-def _build_forward_headers(request: Request, user: CurrentUser) -> dict[str, str]:
+def _build_forward_headers(request: Request, user: CurrentUser | None) -> dict[str, str]:
     # Use lowercase keys throughout so injected headers cleanly overwrite any
     # copied ones (HTTP header names are case-insensitive; mixing cases in a dict
     # would create duplicates that httpx joins with commas).
@@ -68,9 +80,10 @@ def _build_forward_headers(request: Request, user: CurrentUser) -> dict[str, str
         for k, v in request.headers.items()
         if k.lower() not in _EXCLUDED_REQUEST_HEADERS
     }
-    headers["x-user-id"] = user.user_id
-    headers["x-role"] = user.role
-    headers["x-org-id"] = user.org_id
+    if user is not None:
+        headers["x-user-id"] = user.user_id
+        headers["x-role"] = user.role
+        headers["x-org-id"] = user.org_id
     cid = get_correlation_id()
     if cid:
         headers["x-correlation-id"] = cid
@@ -93,12 +106,13 @@ async def _send_with_retry(client: httpx.AsyncClient, req: httpx.Request) -> htt
     "/{full_path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
 )
-async def proxy(
-    full_path: str,
-    request: Request,
-    user: CurrentUser = Depends(get_current_user),
-    _: None = Depends(rate_limit),
-) -> Response:
+async def proxy(full_path: str, request: Request) -> Response:
+    # Public auth routes (register/login/refresh) bypass JWT + rate limiting.
+    user: CurrentUser | None = None
+    if not _is_public(request.url.path):
+        user = await get_current_user(request)  # raises 401 if missing/invalid
+        await rate_limit(user=user)             # raises 429 if over limit
+
     service = resolve_service(request.url.path)
     base_url = get_settings().service_urls[service]
 

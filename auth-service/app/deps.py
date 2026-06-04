@@ -1,16 +1,15 @@
 """Auth dependencies: current-user resolution and RBAC.
 
-The service validates the Authorization bearer token locally (it shares JWT_SECRET),
-checks the blacklist, and loads the user row. (Note: the gateway currently strips
-Authorization and injects X-User-* headers; reconciling that for protected auth
-routes is tracked in docs/PROGRESS.md.)
+Resolves the current user from EITHER:
+  - the gateway-injected `X-User-Id` header (the gateway already validated the JWT and
+    strips Authorization), or
+  - a local `Authorization: Bearer` token (direct calls / tests / logout needing the jti).
 """
 
 from __future__ import annotations
 
 import jwt
 from fastapi import Depends, Request
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -23,6 +22,14 @@ from echoscope_common import ForbiddenError, UnauthorizedError
 async def get_current_user(
     request: Request, db: AsyncSession = Depends(get_db)
 ) -> User:
+    # Trust the gateway-injected identity when present (Authorization was stripped upstream).
+    gateway_uid = request.headers.get("X-User-Id")
+    if gateway_uid:
+        user = await db.get(User, gateway_uid)
+        if user is None or not user.is_active:
+            raise UnauthorizedError("User not found or inactive")
+        return user
+
     header = request.headers.get("Authorization", "")
     if not header.startswith("Bearer "):
         raise UnauthorizedError("Missing or malformed Authorization header")

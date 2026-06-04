@@ -10,7 +10,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     () => new QueryClient({ defaultOptions: { queries: { staleTime: 60_000, retry: 1 } } })
   );
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <QueryClientProvider client={client}>
         {children}
         <Toaster position="top-right" toastOptions={{ className: "dark:!bg-slate-800 dark:!text-slate-100" }} />
