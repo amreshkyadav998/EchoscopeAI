@@ -1,3 +1,21 @@
-# report-service dependencies. Service-specific packages are added in this service's phase.
-# Shared utilities (logger, config, exceptions, schemas):
+# report-service dependencies.
 -e ../common
+-e ../db
+-e ../kafka
+
+# Web framework + server
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
+# DB + cache + scheduling
+asyncpg>=0.29
+redis>=5.0
+celery>=5.3
+
+# Data + report generation
+pandas>=2.1
+matplotlib>=3.8     # trend chart (Agg backend, no GUI)
+fpdf2>=2.7          # pure-Python PDF (no native deps; WeasyPrint optional, needs GTK)
+
+# S3 (optional — only used when AWS_BUCKET is set; falls back to local storage)
+boto3>=1.34
