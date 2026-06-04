@@ -16,11 +16,15 @@ class Settings(BaseAppSettings):
     # optional
     redis_url: str = "redis://redis:6379/0"
     kafka_brokers: str = "kafka:9092"
-    aws_bucket: str | None = None
+    aws_bucket: str | None = None          # set to use S3; otherwise local storage
     aws_region: str = "us-east-1"
     aws_access_key_id: str | None = None
     aws_secret_access_key: str | None = None
     celery_broker_url: str = "redis://redis:6379/1"
+
+    # local storage fallback (used when aws_bucket is unset) + pre-signed URL TTL
+    reports_dir: str = "data/reports"
+    presigned_ttl: int = 86400  # 24h
 
 
 @lru_cache

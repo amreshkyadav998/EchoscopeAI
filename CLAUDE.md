@@ -38,7 +38,8 @@ The complete spec is the High-Level Design at **`docs/AI_Social_Listening_Platfo
 - ✅ **Phase 8 — Analytics Service** (sentiment-processed consumer; Pandas aggregation, spike detection, competitor scoring, 7 REST endpoints + cache-aside; publishes analytics-updated/alert-triggered)
 - ✅ **Phase 9 — Real-Time WebSockets** (notification-service: /ws/dashboard + /ws/alerts, JWT handshake, Kafka→Redis pub/sub bridge, useWebSocket hook)
 - ✅ **Phase 10 — Notification Service** (alert-rule CRUD, evaluation engine on analytics-updated w/ debounce, SendGrid email stub, alert history keyset pagination)
-- ⏭️ **NEXT: Phase 11 — Report Service** (async PDF/CSV via Celery, S3 + pre-signed URLs, report-generated event)
+- ✅ **Phase 11 — Report Service** (async PDF (fpdf2+matplotlib)/CSV via Celery, S3-or-local storage + pre-signed URLs, report-generated event)
+- ⏭️ **NEXT: Phase 12 — gRPC Communication** (proto defs, Analytics/NLP gRPC servers, Report/Notification clients, error mapping)
 
 > Branch workflow: each phase on its own (stacked) branch, pushed for PR-merge into main. Don't pause to ask between phases — keep going.
 

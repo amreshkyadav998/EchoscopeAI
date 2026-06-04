@@ -238,9 +238,27 @@ Consumes `sentiment-processed`; computes analytics over mentions+sentiment_resul
   match, alert persisted, pushed to WS alerts channel, **debounced** on re-eval, history
   returns it, delete cascades.
 
+## ✅ Phase 11 — Report Service (`report-service/`, :8006)
+
+Async PDF/CSV generation via Celery; S3-or-local storage; `report-generated` event.
+
+- **Generation** (`app/generate.py`): `generate_report(report_id)` loads mentions+sentiment
+  (Pandas, filtered by `{from_date,to_date,keywords}`), builds the file, stores it, updates
+  the `reports` row (status/s3_key/size/expires_at/completed_at), publishes `report-generated`.
+  - **PDF** = fpdf2 (cover, KPIs, Matplotlib trend chart, top keywords). WeasyPrint deferred
+    (needs GTK on Windows). **CSV** = Pandas join.
+- **Storage** (`app/storage.py`): boto3 S3 + 24h pre-signed URL when `AWS_BUCKET` set, else
+  local files under `data/reports/` served by `/reports/{id}/download`.
+- **Async API** (`app/routers/reports.py`, HLD §5.6): `POST /reports` → 202 + queued (Celery
+  `generate_report_task`); `GET /reports`, `GET /reports/{id}`, `/download`, `DELETE`,
+  `POST /reports/schedule` (stub — recurring Beat is a follow-up). `app/celery_app.py`.
+- **Verified** (`manual_test.py`): 401; csv queue→generate→download (header row); pdf
+  generate→download (valid %PDF + chart, ~16 KB); list; schedule 202; delete→404;
+  report-generated event consumed.
+- Gotcha: fpdf2's default font is Latin-1 — avoid non-ASCII (used "-" not "—" in the title).
+
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-11. Report Service (async PDF/CSV, S3 + pre-signed URLs)
 12. gRPC Communication (proto defs, servers, clients, error mapping)
 13. Frontend Development (Vite+React+TS, auth/dashboard/mentions/analytics/alerts pages)
 14. Monitoring & Logging (Prometheus, Grafana, Loki, health checks)
