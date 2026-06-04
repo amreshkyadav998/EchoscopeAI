@@ -1,8 +1,8 @@
-"""Notification Service entrypoint (HLD §4.6) — Phase 9: real-time WebSockets.
+"""Notification Service entrypoint (HLD §4.6).
 
-Serves /ws/dashboard and /ws/alerts and runs the Kafka→Redis bridge consumers
-(analytics-updated → dashboard channel, alert-triggered → alerts channel).
-Alert rules / evaluation / email come in Phase 10.
+Serves WebSockets (/ws/dashboard, /ws/alerts) + alert-rule REST APIs, and runs:
+  - Kafka→Redis bridges (analytics-updated → dashboard, alert-triggered → alerts)
+  - the alert evaluation engine (analytics-updated → match rules → alert + email + WS)
 
 Run locally:  uvicorn main:app --host 0.0.0.0 --port 8005 --reload
 """
@@ -16,7 +16,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.bridge import alerts_bridge, dashboard_bridge
+from app.db import engine
+from app.eval_consumer import EvalConsumer
 from app.redis_client import close_redis, init_redis
+from app.routers import alerts
 from app.ws import router as ws_router
 from config import get_settings
 from echoscope_common import AppError, HealthResponse, configure_logging
@@ -33,12 +36,13 @@ async def lifespan(app: FastAPI):
     consumers = []
     tasks: list[asyncio.Task] = []
     if settings.enable_consumer:
-        for make in (dashboard_bridge, alerts_bridge):
+        # WS bridges + the alert evaluation engine (separate consumer groups)
+        for make in (dashboard_bridge, alerts_bridge, EvalConsumer):
             consumer = make()
             await consumer.start()
             consumers.append(consumer)
             tasks.append(asyncio.create_task(consumer.run()))
-        log.info("kafka->redis bridges started", group=settings.consumer_group)
+        log.info("consumers started (bridges + evaluation engine)", group=settings.consumer_group)
 
     try:
         yield
@@ -48,6 +52,7 @@ async def lifespan(app: FastAPI):
         for task in tasks:
             task.cancel()
         await close_redis()
+        await engine.dispose()
         log.info("notification-service shutting down")
 
 
@@ -60,6 +65,7 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
 
 
 app.include_router(ws_router)
+app.include_router(alerts.router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["health"])

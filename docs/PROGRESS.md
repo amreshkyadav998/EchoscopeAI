@@ -221,9 +221,25 @@ Consumes `sentiment-processed`; computes analytics over mentions+sentiment_resul
 
 > Workflow note: Phase 9+ built on per-phase branches (stacked) for PR-merge into main.
 
+## ✅ Phase 10 — Notification Service: alerting (`notification-service/`, :8005)
+
+- **Rule CRUD + history** (`app/routers/alerts.py`, HLD §5.5): `GET/POST/PUT/DELETE
+  /api/v1/alerts/rules`; `GET /api/v1/alerts/history` with keyset pagination on
+  `triggered_at` (`cursor` param, `next_cursor` in response).
+- **Evaluation engine** (`app/evaluation.py`): on `analytics-updated`, evaluate enabled
+  org rules (condition types `volume` / `negative_pct` / `spike`), **debounce** via Redis
+  (`alert:debounce:{rule_id}`, 10 min), persist an `alerts` row (Core insert), push to
+  `ws:alerts:{org}`, and email org admins. `app/eval_consumer.py` consumes on group
+  `notification-service-eval` (separate from the WS bridge group so both receive events).
+- **Email** (`app/email.py`): Jinja2 HTML; SendGrid HTTP API if `SENDGRID_API_KEY`, else
+  logs a stub (runs key-free).
+- Config: `db.py`, `deps.py` (X-User-* auth). Deps add jinja2/httpx/asyncpg.
+- **Verified** (`manual_test_phase10.py`): rule CRUD + 401, evaluation fires 1 alert on
+  match, alert persisted, pushed to WS alerts channel, **debounced** on re-eval, history
+  returns it, delete cascades.
+
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-10. Notification Service (alert rules, evaluation engine, SendGrid email, history)
 11. Report Service (async PDF/CSV, S3 + pre-signed URLs)
 12. gRPC Communication (proto defs, servers, clients, error mapping)
 13. Frontend Development (Vite+React+TS, auth/dashboard/mentions/analytics/alerts pages)
