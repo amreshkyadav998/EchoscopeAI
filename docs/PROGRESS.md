@@ -257,9 +257,27 @@ Async PDF/CSV generation via Celery; S3-or-local storage; `report-generated` eve
   report-generated event consumed.
 - Gotcha: fpdf2's default font is Latin-1 — avoid non-ASCII (used "-" not "—" in the title).
 
+## ✅ Phase 12 — gRPC Communication (central `rpc/` package = `echoscope_rpc`)
+
+Internal service-to-service gRPC (HLD §9/§12).
+
+- **Contracts** (`rpc/protos/*.proto` → generated `echoscope_rpc/*_pb2[_grpc].py`, committed;
+  `generate.py` rewrites imports package-relative). `client.py`: `channel`, `with_retry`
+  (backoff on UNAVAILABLE), `grpc_status_to_http` (NOT_FOUND→404, UNAVAILABLE→503).
+- **Analytics gRPC server** (`analytics-service/app/grpc_server.py`, :50051):
+  GetAnalyticsSummary / GetTrends / GetCurrentMetrics — backed by the Pandas computations.
+- **NLP gRPC server** (`nlp-service/app/grpc_server.py`, :50052): GetSentimentBatch /
+  GetEntitiesForMention — backed by `analyze_text`. Both start in their lifespan (`enable_grpc`).
+- **Clients** (best-effort, degrade if server down): `report-service/app/grpc_client.py`
+  embeds a live analytics summary in the PDF; `notification-service/app/grpc_client.py`
+  enriches alerts with current metrics.
+- Each service adds `-e ../rpc`. **Verified** (`analytics-service/manual_test_grpc.py`,
+  `nlp-service/manual_test_grpc.py`): in-process server + client call all 5 RPCs
+  (summary total=229, trends 28 pts, sentiment batch positive/negative/neutral, NER found
+  "Acme Corporation"/"London"), plus status mapping.
+
 ## ⬜ Remaining phases (overview — see HLD page 18-20)
 
-12. gRPC Communication (proto defs, servers, clients, error mapping)
 13. Frontend Development (Vite+React+TS, auth/dashboard/mentions/analytics/alerts pages)
 14. Monitoring & Logging (Prometheus, Grafana, Loki, health checks)
 15. AWS Deployment + CI/CD (Dockerfiles, ECR, RDS/ElastiCache/MSK/S3/ALB, ECS, GH Actions)

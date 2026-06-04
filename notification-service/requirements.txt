@@ -2,6 +2,7 @@
 -e ../common
 -e ../db
 -e ../kafka
+-e ../rpc          # gRPC client (Phase 12)
 
 # Web framework + server (with WebSocket support)
 fastapi>=0.110

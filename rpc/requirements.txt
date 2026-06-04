@@ -1,0 +1,5 @@
+# Shared gRPC package: protos, generated stubs, client helpers.
+-e .
+
+# Only needed to (re)generate stubs from .proto files:
+grpcio-tools>=1.60

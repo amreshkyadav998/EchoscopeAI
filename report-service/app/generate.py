@@ -116,6 +116,16 @@ def build_pdf(df: pd.DataFrame, meta: dict) -> bytes:
         pdf.cell(0, 8, value, new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
 
+    # live analytics summary fetched over gRPC (if available)
+    live = meta.get("live")
+    if live:
+        pdf.set_font("Helvetica", "I", 10)
+        pdf.set_text_color(80, 80, 80)
+        pdf.cell(0, 7, f"Live (gRPC): avg/day {live['avg_per_day']}, spike_detected={live['spike_detected']}",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(1)
+
     # trend chart
     png = _trend_png(df)
     if png:
@@ -154,7 +164,11 @@ async def generate_report(report_id: str) -> dict:
     if rtype == "csv":
         data, ext = build_csv(df), "csv"
     else:
-        data, ext = build_pdf(df, {"org_id": org_id}), "pdf"
+        # enrich the PDF with a live analytics summary over gRPC (best-effort)
+        from app.grpc_client import get_analytics_summary
+
+        live = await get_analytics_summary(org_id)
+        data, ext = build_pdf(df, {"org_id": org_id, "live": live}), "pdf"
 
     stored = store_report(org_id, report_id, ext, data)
     completed_at = datetime.now(timezone.utc)
